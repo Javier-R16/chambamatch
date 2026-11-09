@@ -31,7 +31,7 @@ async function Contenido({ params }: { params: Promise<{ matchId: string }> }) {
   const soyCandidato = perfil.rol === "candidato";
   const otroId = soyCandidato ? match.companies.owner_id : match.candidate_id;
 
-  const [{ data: contacto }, { data: mensajes }, cv] = await Promise.all([
+  const [{ data: contacto }, { data: mensajes }, cv, { data: yoBloquee }, { data: hayBloqueo }] = await Promise.all([
     // Visible solo porque hay match (RLS)
     supabase.from("contactos_privados").select("email, telefono").eq("user_id", otroId).maybeSingle(),
     supabase.from("messages").select("*").eq("match_id", matchId).order("creado_en", { ascending: true }).limit(300),
@@ -45,6 +45,8 @@ async function Contenido({ params }: { params: Promise<{ matchId: string }> }) {
           .then(async ({ data: c }) =>
             c?.cv_url ? (await supabase.storage.from("cvs").createSignedUrl(c.cv_url, 60 * 30)).data?.signedUrl ?? null : null,
           ),
+    supabase.from("blocks").select("blocked_id").eq("blocker_id", uid).eq("blocked_id", otroId).maybeSingle(),
+    supabase.rpc("match_bloqueado", { p_match: matchId }),
   ]);
 
   return (
@@ -52,7 +54,9 @@ async function Contenido({ params }: { params: Promise<{ matchId: string }> }) {
       uid={uid}
       matchId={matchId}
       titulo={match.jobs?.titulo ?? ""}
+      bloqueo={{ yo: !!yoBloquee, otro: !yoBloquee && !!hayBloqueo }}
       otro={{
+        id: otroId,
         nombre: (soyCandidato ? match.companies.nombre : match.profiles?.nombre) ?? "",
         imagen: soyCandidato ? match.companies.logo_url : (match.profiles?.foto_url ?? null),
         esEmpresa: soyCandidato,

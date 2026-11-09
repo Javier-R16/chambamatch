@@ -18,7 +18,17 @@ App de empleo estilo Tinder para Panamá. El candidato desliza vacantes y la emp
    - Redirect URLs: `http://localhost:3000/auth/callback` y `https://TU-APP.vercel.app/auth/callback`.
    - Para probar rápido, en Authentication → Providers → Email puedes desactivar "Confirm email".
 4. **Datos de prueba** (opcional): `npm run sembrar`. Crea 6 empresas, 20 vacantes y 10 candidatos. Todas las cuentas usan la contraseña `ChambaDemo2026!`.
-5. `npm run dev` y abre http://localhost:3000
+5. **Notificaciones push** (opcional): `npx web-push generate-vapid-keys` y copia las claves en `.env.local` (`NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`). Sin ellas la app funciona igual, solo sin push.
+6. `npm run dev` y abre http://localhost:3000
+
+## Fase 2 (incluida)
+
+- **Filtros** del feed (provincias, modalidad y salario mínimo), guardados en el perfil. Las vacantes remotas aparecen siempre.
+- **Súper Chamba**: indicador diario en el feed; el límite lo valida la BD.
+- **Notificaciones**: en la app (toast y contador de no leídos) y Web Push para matches y mensajes. Las funciones `preparar_push_*` impiden el spam: solo el remitente puede disparar el aviso, una sola vez.
+- **Reportar y bloquear** desde el menú ⋮ del chat. Bloquear corta los mensajes y saca a ambos de los feeds.
+- **Borrar cuenta** (derecho de cancelación, Ley 81): elimina archivos y todos los datos en cascada.
+- **PWA instalable**: manifest, íconos generados y service worker (`public/sw.js`). En Android: Chrome → "Instalar app" o el botón en Perfil.
 
 ## Scripts
 
@@ -26,7 +36,7 @@ App de empleo estilo Tinder para Panamá. El candidato desliza vacantes y la emp
 |---|---|
 | `npm run dev` | Servidor de desarrollo |
 | `npm run build` | Build de producción |
-| `npm run test:rls` | Corre las migraciones en un Postgres embebido y prueba 45 reglas de seguridad (sin Docker) |
+| `npm run test:rls` | Corre las migraciones en un Postgres embebido y prueba 54 reglas de seguridad (sin Docker) |
 | `npm run sembrar` | Carga los datos de prueba (usa la service role key, solo en tu máquina) |
 | `npm run db:push` | Aplica las migraciones al proyecto de Supabase vinculado |
 

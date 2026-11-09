@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { FormCandidato } from "@/components/perfil/form-candidato";
+import { BorrarCuenta, InstalarApp, Notificaciones } from "@/components/perfil/ajustes";
 import { FormEmpresa } from "@/components/perfil/form-empresa";
 import { Cargando, Titulo } from "@/components/titulo";
 import { requerirApp } from "@/lib/sesion";
@@ -28,15 +29,17 @@ async function Contenido() {
       <p className="text-sm text-zinc-500">
         {email} · {perfil.rol === "candidato" ? "Candidato/a" : "Empresa"}
       </p>
+      <div className="space-y-3">
+        <Notificaciones uid={uid} />
+        <InstalarApp />
+      </div>
       {formulario}
       <div className="space-y-3 border-t border-zinc-200 pt-6 text-sm">
         <Link href="/privacidad" className="block font-semibold text-zinc-700">
           Política de privacidad y tus derechos (Ley 81)
         </Link>
-        <p className="text-zinc-500">
-          Para borrar tu cuenta o ejercer tus derechos ARCO, escríbenos. (En la Fase 2 se podrá hacer desde aquí).
-        </p>
         <CerrarSesion />
+        <BorrarCuenta uid={uid} />
       </div>
     </div>
   );

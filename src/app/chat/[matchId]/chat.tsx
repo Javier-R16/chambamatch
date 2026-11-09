@@ -6,9 +6,12 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Avatar } from "@/components/avatar";
 import { crearClienteNavegador } from "@/lib/supabase/client";
+import { notificar } from "@/lib/notificar";
+import { AccionesChat } from "./acciones-chat";
 import type { Mensaje } from "@/lib/tipos";
 
 type Otro = {
+  id: string;
   nombre: string;
   imagen: string | null;
   esEmpresa: boolean;
@@ -17,16 +20,26 @@ type Otro = {
   cvUrl: string | null;
 };
 
-type Props = { uid: string; matchId: string; titulo: string; otro: Otro; iniciales: Mensaje[] };
+type Props = {
+  uid: string;
+  matchId: string;
+  titulo: string;
+  otro: Otro;
+  iniciales: Mensaje[];
+  /** yo: yo bloqueé al otro · otro: el otro me bloqueó (no se le dice explícitamente) */
+  bloqueo: { yo: boolean; otro: boolean };
+};
 
 const hora = new Intl.DateTimeFormat("es-PA", { hour: "numeric", minute: "2-digit" });
 const dia = new Intl.DateTimeFormat("es-PA", { weekday: "long", day: "numeric", month: "long" });
 
-export function Chat({ uid, matchId, titulo, otro, iniciales }: Props) {
+export function Chat({ uid, matchId, titulo, otro, iniciales, bloqueo }: Props) {
   const supabase = crearClienteNavegador();
   const [mensajes, setMensajes] = useState<Mensaje[]>(iniciales);
   const [texto, setTexto] = useState("");
   const [enviando, setEnviando] = useState(false);
+  const [yoBloquee, setYoBloquee] = useState(bloqueo.yo);
+  const bloqueado = yoBloquee || bloqueo.otro;
   const fondo = useRef<HTMLDivElement>(null);
 
   // Tiempo real: nuevos mensajes y confirmaciones de lectura
@@ -70,6 +83,7 @@ export function Chat({ uid, matchId, titulo, otro, iniciales }: Props) {
       return void toast.error("No se pudo enviar el mensaje.");
     }
     setMensajes((prev) => (prev.some((x) => x.id === data.id) ? prev : [...prev, data]));
+    notificar("mensaje", data.id);
   }
 
   const ultimoMio = [...mensajes].reverse().find((m) => m.sender_id === uid);
@@ -86,6 +100,14 @@ export function Chat({ uid, matchId, titulo, otro, iniciales }: Props) {
             <p className="truncate font-semibold">{otro.nombre}</p>
             <p className="truncate text-xs text-rose-600">{titulo}</p>
           </div>
+          <AccionesChat
+            uid={uid}
+            otroId={otro.id}
+            otroNombre={otro.nombre}
+            matchId={matchId}
+            yoBloquee={yoBloquee}
+            onCambioBloqueo={setYoBloquee}
+          />
         </div>
         <div className="flex gap-2 overflow-x-auto px-3 pb-2 text-xs">
           {otro.telefono && (
@@ -138,6 +160,11 @@ export function Chat({ uid, matchId, titulo, otro, iniciales }: Props) {
         <div ref={fondo} />
       </div>
 
+      {bloqueado ? (
+        <p className="pb-seguro border-t border-zinc-200 bg-white px-4 pt-3 text-center text-sm text-zinc-500">
+          {yoBloquee ? `Bloqueaste a ${otro.nombre}. Desbloquea desde el menú ⋮ para escribir.` : "No es posible enviar mensajes en este chat."}
+        </p>
+      ) : (
       <form onSubmit={enviar} className="pb-seguro flex items-end gap-2 border-t border-zinc-200 bg-white px-3 pt-2">
         <label htmlFor="mensaje" className="sr-only">
           Mensaje
@@ -166,6 +193,7 @@ export function Chat({ uid, matchId, titulo, otro, iniciales }: Props) {
           <SendHorizontal className="size-5" />
         </button>
       </form>
+      )}
     </div>
   );
 }

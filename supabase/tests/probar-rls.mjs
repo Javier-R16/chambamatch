@@ -233,5 +233,46 @@ await esperaOk("Si la empresa descarta, el candidato ve 'enviada' y luego 'cerra
   igual((await como(caro, "select estado from public.mis_postulaciones")).rows[0].estado, "cerrada", "estado");
 });
 
+console.log("\nFase 2: filtros, push y borrar cuenta");
+await esperaOk("El candidato guarda sus filtros", () => como(U.beto,
+  `update public.candidate_profiles set filtros = '{"salario_min": 800}' where user_id = auth.uid()`));
+
+const job2 = (await como(U.emp2, `insert into public.jobs (company_id, titulo, descripcion, modalidad, provincia)
+  values (public.mi_company_id(), 'Chofer', 'Rutas', 'presencial', 'Colón') returning id`)).rows[0].id;
+await como(U.beto, `insert into public.candidate_swipes (candidate_id, job_id, direccion) values (auth.uid(), '${job2}', 'right')`);
+await como(U.emp2, `insert into public.company_swipes (job_id, candidate_id, direccion) values ('${job2}', '${U.beto}', 'right')`);
+const match2 = (await db.query("select id from public.matches where job_id = $1", [job2])).rows[0].id;
+
+await esperaOk("Beto registra su suscripción push", () => como(U.beto,
+  "insert into public.push_subscriptions (user_id, endpoint, p256dh, auth) values (auth.uid(), 'https://push.test/beto', 'k', 'a')"));
+await esperaError("No se puede registrar push a nombre de otro", () => como(U.beto,
+  `insert into public.push_subscriptions (user_id, endpoint, p256dh, auth) values ('${U.ana}', 'https://push.test/x', 'k', 'a')`));
+await esperaOk("La empresa NO puede leer las suscripciones de Beto", async () => {
+  igual((await como(U.emp2, "select * from public.push_subscriptions")).rows.length, 0, "filas");
+});
+await esperaOk("Beto no puede disparar el push de su propio match", async () => {
+  igual((await como(U.beto, "select * from public.preparar_push_match($1)", [match2])).rows.length, 0, "filas");
+});
+await esperaOk("La empresa notifica el match una sola vez", async () => {
+  igual((await como(U.emp2, "select * from public.preparar_push_match($1)", [match2])).rows.length, 1, "1ª vez");
+  igual((await como(U.emp2, "select * from public.preparar_push_match($1)", [match2])).rows.length, 0, "2ª vez");
+});
+await esperaOk("Push de mensaje: solo el remitente y una sola vez", async () => {
+  const msg = (await como(U.emp2, `insert into public.messages (match_id, sender_id, cuerpo) values ('${match2}', auth.uid(), '¿Puedes mañana?') returning id`)).rows[0].id;
+  igual((await como(U.beto, "select * from public.preparar_push_mensaje($1)", [msg])).rows.length, 0, "no remitente");
+  igual((await como(U.ana, "select * from public.preparar_push_mensaje($1)", [msg])).rows.length, 0, "tercero");
+  const r = await como(U.emp2, "select * from public.preparar_push_mensaje($1)", [msg]);
+  igual(r.rows.length, 1, "remitente");
+  igual(r.rows[0].endpoint, "https://push.test/beto", "destino");
+  igual((await como(U.emp2, "select * from public.preparar_push_mensaje($1)", [msg])).rows.length, 0, "repetido");
+});
+await esperaOk("Borrar cuenta elimina perfil y postulaciones", async () => {
+  const caro = "00000000-0000-0000-0000-00000000000c";
+  await como(caro, "select public.borrar_mi_cuenta()");
+  igual((await db.query("select count(*)::int n from public.profiles where id = $1", [caro])).rows[0].n, 0, "perfil");
+  igual((await db.query("select count(*)::int n from public.candidate_swipes where candidate_id = $1", [caro])).rows[0].n, 0, "swipes");
+});
+await esperaError("Anónimo no puede borrar cuentas", () => como(null, "select public.borrar_mi_cuenta()"));
+
 console.log(fallos ? `\n✘ ${fallos} prueba(s) fallaron` : "\n✔ Todas las pruebas de RLS pasaron");
 process.exit(fallos ? 1 : 0);

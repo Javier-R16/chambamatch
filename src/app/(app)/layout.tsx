@@ -8,7 +8,7 @@ async function Navegacion() {
   const { uid, perfil } = await requerirApp();
   return (
     <>
-      <BarraNavegacion rol={perfil.rol} />
+      <BarraNavegacion rol={perfil.rol} uid={uid} />
       {perfil.rol === "candidato" && <EscuchaMatches uid={uid} />}
     </>
   );

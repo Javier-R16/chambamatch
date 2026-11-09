@@ -6,6 +6,7 @@ import { MazoSwipe } from "./mazo-swipe";
 import { TarjetaPostulante } from "./tarjetas";
 import { Esqueleto } from "./feed-candidato";
 import { anunciarMatch } from "@/components/match/capa-match";
+import { notificar } from "@/lib/notificar";
 import { crearClienteNavegador } from "@/lib/supabase/client";
 import type { Direccion, PostulanteFeed } from "@/lib/tipos";
 
@@ -57,7 +58,10 @@ export function FeedEmpresa({ jobId, tituloVacante, habilidadesVacante }: Props)
       .eq("job_id", jobId)
       .eq("candidate_id", p.candidate_id)
       .maybeSingle();
-    if (match) anunciarMatch({ matchId: match.id, titulo: tituloVacante, con: p.nombre, imagen: p.foto_url });
+    if (match) {
+      anunciarMatch({ matchId: match.id, titulo: tituloVacante, con: p.nombre, imagen: p.foto_url });
+      notificar("match", match.id);
+    }
   };
 
   if (cargando) return <Esqueleto />;
