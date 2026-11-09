@@ -76,7 +76,15 @@ async function Lista() {
 export default function Postulaciones() {
   return (
     <>
-      <Titulo>Mis postulaciones</Titulo>
+      <Titulo
+        accion={
+          <Link href="/practica" className="rounded-full bg-zinc-900 px-3 py-2 text-sm font-semibold text-white">
+            🎙️ Practicar
+          </Link>
+        }
+      >
+        Mis postulaciones
+      </Titulo>
       <Suspense fallback={<Cargando />}>
         <Lista />
       </Suspense>

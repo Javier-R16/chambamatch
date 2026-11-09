@@ -39,7 +39,17 @@ export default function Privacidad() {
       <h2 className="mt-6 text-lg font-bold text-zinc-900">Encargados del tratamiento</h2>
       <p>
         Supabase (base de datos, autenticación y archivos) y Vercel (alojamiento web). En la fase de entrevistas con IA se
-        pedirá un consentimiento aparte.
+        pide un consentimiento aparte (ver abajo).
+      </p>
+
+      <h2 className="mt-6 text-lg font-bold text-zinc-900">Entrevista con inteligencia artificial</h2>
+      <p>
+        Es opcional y requiere un consentimiento aparte. Tu voz se transcribe con el reconocimiento de voz del navegador
+        (en Chrome lo procesa Google). Las preguntas y la evaluación las genera Google Gemini a partir de la vacante y de tus
+        respuestas; nunca le enviamos tu nombre, teléfono, correo ni cédula. En la capa gratuita de Gemini, Google puede
+        usar ese contenido para mejorar sus productos. En una entrevista de una empresa, ella ve la transcripción, un
+        resumen y un puntaje orientativo; en el modo práctica, solo tú ves el resultado. La evaluación es un apoyo y no
+        sustituye la decisión de una persona.
       </p>
 
       <h2 className="mt-6 text-lg font-bold text-zinc-900">Tus derechos (ARCO)</h2>

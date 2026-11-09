@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Avatar } from "@/components/avatar";
 import { crearClienteNavegador } from "@/lib/supabase/client";
 import { notificar } from "@/lib/notificar";
+import { BotonEntrevista } from "@/components/entrevista/boton-entrevista";
 import { AccionesChat } from "./acciones-chat";
 import type { Mensaje } from "@/lib/tipos";
 
@@ -110,6 +111,7 @@ export function Chat({ uid, matchId, titulo, otro, iniciales, bloqueo }: Props) 
           />
         </div>
         <div className="flex gap-2 overflow-x-auto px-3 pb-2 text-xs">
+          {!otro.esEmpresa && !bloqueado && <BotonEntrevista matchId={matchId} />}
           {otro.telefono && (
             <a href={`tel:${otro.telefono.replace(/[^\d+]/g, "")}`} className="inline-flex shrink-0 items-center gap-1 rounded-full bg-zinc-100 px-3 py-1.5 font-medium">
               <Phone className="size-3.5" /> {otro.telefono}

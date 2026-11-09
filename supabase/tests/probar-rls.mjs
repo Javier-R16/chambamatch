@@ -274,5 +274,32 @@ await esperaOk("Borrar cuenta elimina perfil y postulaciones", async () => {
 });
 await esperaError("Anónimo no puede borrar cuentas", () => como(null, "select public.borrar_mi_cuenta()"));
 
+console.log("\nFase 3: entrevistas con IA");
+// El servidor (service role) crea la entrevista; aquí lo simulamos como superusuario.
+const entrevista = (await db.query(
+  `insert into public.interviews (match_id, candidate_id, job_id, modo, estado, transcripcion)
+   values ($1, $2, $3, 'empresa', 'en_curso', '[{"rol":"ia","texto":"¿Por qué este puesto?"}]') returning id`,
+  [match2, U.beto, job2],
+)).rows[0].id;
+await db.query("insert into public.interview_preguntas (interview_id, preguntas) values ($1, '[\"p1\",\"p2\"]')", [entrevista]);
+
+await esperaOk("El candidato ve su entrevista", async () => {
+  igual((await como(U.beto, "select id from public.interviews")).rows.length, 1, "filas");
+});
+await esperaOk("La empresa del match ve la entrevista", async () => {
+  igual((await como(U.emp2, "select id from public.interviews")).rows.length, 1, "filas");
+});
+await esperaOk("Otra empresa y otros candidatos NO la ven", async () => {
+  igual((await como(U.emp1, "select id from public.interviews")).rows.length, 0, "empresa 1");
+  igual((await como(U.ana, "select id from public.interviews")).rows.length, 0, "Ana");
+});
+await esperaError("El candidato no puede ponerse puntaje", () => como(U.beto, "update public.interviews set puntaje = 100"));
+await esperaError("El candidato no puede editar su transcripción", () => como(U.beto, "update public.interviews set transcripcion = '[]'"));
+await esperaError("Nadie puede crear entrevistas desde el cliente", () => como(U.emp2,
+  `insert into public.interviews (match_id, candidate_id, modo, estado) values ('${match2}', '${U.beto}', 'empresa', 'llamando')`));
+await esperaError("El candidato no puede leer las preguntas por adelantado", () => como(U.beto, "select * from public.interview_preguntas"));
+await esperaError("Solo una entrevista activa por match", () => db.query(
+  `insert into public.interviews (match_id, candidate_id, modo, estado) values ($1, $2, 'empresa', 'llamando')`, [match2, U.beto]));
+
 console.log(fallos ? `\n✘ ${fallos} prueba(s) fallaron` : "\n✔ Todas las pruebas de RLS pasaron");
 process.exit(fallos ? 1 : 0);

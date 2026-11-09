@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { CapaMatch } from "@/components/match/capa-match";
+import { LlamadaEntrante } from "@/components/entrevista/llamada-entrante";
 import { EscuchaMatches } from "@/components/match/escucha-matches";
 import { BarraNavegacion } from "@/components/navegacion";
 import { requerirApp } from "@/lib/sesion";
@@ -9,7 +10,12 @@ async function Navegacion() {
   return (
     <>
       <BarraNavegacion rol={perfil.rol} uid={uid} />
-      {perfil.rol === "candidato" && <EscuchaMatches uid={uid} />}
+      {perfil.rol === "candidato" && (
+        <>
+          <EscuchaMatches uid={uid} />
+          <LlamadaEntrante uid={uid} />
+        </>
+      )}
     </>
   );
 }
