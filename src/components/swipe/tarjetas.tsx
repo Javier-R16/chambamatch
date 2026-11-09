@@ -37,7 +37,12 @@ function Dato({ icono: Icono, children }: { icono: typeof MapPin; children: Reac
 export function TarjetaVacante({ v, misHabilidades }: { v: VacanteFeed; misHabilidades: string[] }) {
   return (
     <div className="flex h-full flex-col">
-      <div className="bg-gradient-to-br from-orange-50 to-rose-50 p-5">
+      <div className="relative bg-gradient-to-br from-orange-50 to-rose-50 p-5">
+        {v.destacada && (
+          <span className="absolute right-4 top-4 rounded-full bg-amber-400 px-2.5 py-1 text-xs font-bold text-amber-950 shadow-sm">
+            ⭐ Destacada
+          </span>
+        )}
         <div className="flex items-center gap-3">
           <Avatar src={v.empresa_logo} nombre={v.empresa_nombre} cuadrado className="size-14 text-lg" />
           <div className="min-w-0">

@@ -301,5 +301,44 @@ await esperaError("El candidato no puede leer las preguntas por adelantado", () 
 await esperaError("Solo una entrevista activa por match", () => db.query(
   `insert into public.interviews (match_id, candidate_id, modo, estado) values ($1, $2, 'empresa', 'llamando')`, [match2, U.beto]));
 
+console.log("\nFase 4: monetización (apagada)");
+await esperaOk("Con pagos apagados no hay límite de vacantes", async () => {
+  for (let i = 0; i < 4; i++) {
+    await como(U.emp2, `insert into public.jobs (company_id, titulo, descripcion, modalidad, provincia)
+      values (public.mi_company_id(), 'Extra ${i}', 'x', 'remoto', 'Panamá')`);
+  }
+});
+await esperaOk("Con pagos activos se respeta el límite gratis", async () => {
+  await db.exec("update public.config_app set valor = 'true' where clave = 'pagos_activos'");
+  let fallo = false;
+  try {
+    await como(U.emp2, `insert into public.jobs (company_id, titulo, descripcion, modalidad, provincia)
+      values (public.mi_company_id(), 'Sobre el límite', 'x', 'remoto', 'Panamá')`);
+  } catch { fallo = true; }
+  await db.exec("update public.config_app set valor = 'false' where clave = 'pagos_activos'");
+  if (!fallo) throw new Error("se creó la vacante sobre el límite");
+});
+await esperaError("La empresa no puede darse cupo gratis", () => como(U.emp2,
+  "update public.companies set vacantes_extra = 100 where owner_id = auth.uid()"));
+await esperaError("La empresa no puede registrar pagos", () => como(U.emp2,
+  "insert into public.pagos (company_id, plan_id, monto_centavos, proveedor) values (public.mi_company_id(), 'paquete_5', 1, 'x')"));
+await esperaError("La empresa no puede aplicar pagos", () => como(U.emp2, "select public.aplicar_pago(gen_random_uuid())"));
+await esperaError("La empresa no puede activar los pagos", () => como(U.emp2, "update public.config_app set valor = 'true'"));
+await esperaOk("aplicar_pago (servidor) destaca la vacante una sola vez", async () => {
+  const c2 = (await db.query("select id from public.companies where owner_id = $1", [U.emp2])).rows[0].id;
+  const pago = (await db.query(
+    "insert into public.pagos (company_id, plan_id, job_id, monto_centavos, proveedor) values ($1, 'destacada_7', $2, 999, 'simulado') returning id",
+    [c2, job2])).rows[0].id;
+  await db.query("select public.aplicar_pago($1)", [pago]);
+  const h1 = (await db.query("select destacada_hasta from public.jobs where id = $1", [job2])).rows[0].destacada_hasta;
+  await db.query("select public.aplicar_pago($1)", [pago]); // repetido: no suma
+  const h2 = (await db.query("select destacada_hasta from public.jobs where id = $1", [job2])).rows[0].destacada_hasta;
+  if (!h1 || +h1 !== +h2) throw new Error("no idempotente");
+});
+await esperaOk("El feed marca la vacante destacada", async () => {
+  const r = await como(U.ana, "select titulo, destacada from public.feed_candidato()");
+  igual(r.rows[0].destacada, true, "primera es destacada");
+});
+
 console.log(fallos ? `\n✘ ${fallos} prueba(s) fallaron` : "\n✔ Todas las pruebas de RLS pasaron");
 process.exit(fallos ? 1 : 0);

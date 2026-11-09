@@ -52,7 +52,7 @@ export function FormVacante({ companyId, provinciaEmpresa, vacante }: Props) {
       ? await supabase.from("jobs").update(datos).eq("id", vacante.id)
       : await supabase.from("jobs").insert({ company_id: companyId, ...datos });
     setGuardando(false);
-    if (error) return void toast.error("No se pudo guardar la vacante.");
+    if (error) return void toast.error(error.code === "P0001" ? error.message : "No se pudo guardar la vacante.");
     toast.success(vacante ? "Vacante actualizada" : "¡Vacante publicada!");
     router.replace("/empresa");
     router.refresh();

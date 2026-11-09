@@ -1,7 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const RUTAS_PUBLICAS = ["/", "/entrar", "/auth", "/privacidad"];
+// /api/pagos/webhook: lo llama la pasarela de pago (sin sesión); valida su propia firma.
+const RUTAS_PUBLICAS = ["/", "/entrar", "/auth", "/privacidad", "/api/pagos/webhook"];
 
 function esPublica(path: string) {
   return RUTAS_PUBLICAS.some((r) => (r === "/" ? path === "/" : path === r || path.startsWith(r + "/")));

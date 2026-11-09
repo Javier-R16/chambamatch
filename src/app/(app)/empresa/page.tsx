@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Plus, Users } from "lucide-react";
+import { Plus, Star, Users } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
@@ -56,8 +56,13 @@ async function Panel() {
                   {v.ciudad ?? v.provincia} · {etiquetaModalidad(v.modalidad)} · {formatoSalario(v.salario_min, v.salario_max)}
                 </p>
               </div>
-              <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${v.activa ? "bg-emerald-100 text-emerald-800" : "bg-zinc-100 text-zinc-500"}`}>
-                {v.activa ? "Activa" : "Cerrada"}
+              <span className="flex shrink-0 flex-col items-end gap-1">
+                <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${v.activa ? "bg-emerald-100 text-emerald-800" : "bg-zinc-100 text-zinc-500"}`}>
+                  {v.activa ? "Activa" : "Cerrada"}
+                </span>
+                {v.destacada_hasta && new Date(v.destacada_hasta) > new Date() && (
+                  <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-800">⭐ Destacada</span>
+                )}
               </span>
             </div>
             <div className="mt-3 flex gap-2">
@@ -84,9 +89,14 @@ export default function PanelEmpresa() {
     <>
       <Titulo
         accion={
-          <Link href="/empresa/vacantes/nueva" className={buttonVariants({ size: "sm", className: "h-10 px-3 font-semibold" })}>
-            <Plus className="size-4" /> Nueva
-          </Link>
+          <div className="flex gap-2">
+            <Link href="/empresa/planes" className={buttonVariants({ size: "sm", variant: "outline", className: "h-10 px-3 font-semibold" })}>
+              <Star className="size-4 text-amber-500" fill="currentColor" /> Planes
+            </Link>
+            <Link href="/empresa/vacantes/nueva" className={buttonVariants({ size: "sm", className: "h-10 px-3 font-semibold" })}>
+              <Plus className="size-4" /> Nueva
+            </Link>
+          </div>
         }
       >
         Mis vacantes

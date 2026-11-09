@@ -47,11 +47,13 @@ export type Vacante = {
   tipo_contrato: TipoContrato;
   habilidades: string[];
   activa: boolean;
+  destacada_hasta: string | null;
   creado_en: string;
 };
 
 // Fila de feed_candidato()
-export type VacanteFeed = Omit<Vacante, "company_id" | "activa"> & {
+export type VacanteFeed = Omit<Vacante, "company_id" | "activa" | "destacada_hasta"> & {
+  destacada?: boolean;
   empresa_nombre: string;
   empresa_logo: string | null;
   empresa_sector: string | null;
